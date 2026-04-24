@@ -161,3 +161,70 @@ def get_session_orders(session_token: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Session not found")
     
     return db.query(models.Order).filter(models.Order.table_session_id == table_session.id).all()
+
+# --- Staff Dashboard ---
+@app.get("/staff/orders", response_model=List[schemas.Order])
+def get_staff_orders(active_only: bool = True, db: Session = Depends(get_db)):
+    query = db.query(models.Order)
+    if active_only:
+        query = query.filter(models.Order.status.in_([models.OrderStatus.RECEIVED, models.OrderStatus.COOKING, models.OrderStatus.READY]))
+    return query.order_by(models.Order.created_at.desc()).all()
+
+@app.patch("/staff/orders/{order_id}/status", response_model=schemas.Order)
+def update_order_status(order_id: int, status: schemas.OrderStatus, db: Session = Depends(get_db)):
+    order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    order.status = status
+    db.commit()
+    db.refresh(order)
+    return order
+
+# --- AI Feature: Smart Recommendations & Upselling ---
+@app.get("/ai/recommendations/{session_token}", response_model=List[schemas.MenuItem])
+def get_recommendations(session_token: str, db: Session = Depends(get_db)):
+    # 1. Get user preferences for this session
+    user_prefs = db.query(models.UserPreference).filter(models.UserPreference.user_id == session_token).all()
+    ordered_item_ids = [p.menu_item_id for p in user_prefs]
+    
+    # 2. Basic Personalization: Recommend items from categories the user hasn't tried yet but are popular
+    # Or suggest pairings (Upselling)
+    
+    recommendations = []
+    
+    # Check if they have ordered a Main Course (category_id=2) but no Drink (category_id=4)
+    has_main = any(db.query(models.MenuItem).filter(models.MenuItem.id == oid, models.MenuItem.category_id == 2).first() for oid in ordered_item_ids)
+    has_drink = any(db.query(models.MenuItem).filter(models.MenuItem.id == oid, models.MenuItem.category_id == 4).first() for oid in ordered_item_ids)
+    
+    if has_main and not has_drink:
+        # Upsell a drink
+        drink = db.query(models.MenuItem).filter(models.MenuItem.category_id == 4, models.MenuItem.is_available == True).first()
+        if drink: recommendations.append(drink)
+    
+    # 3. Popular Items (Collaborative filtering simulation)
+    popular_items = db.query(models.MenuItem).join(models.UserPreference).order_by(models.UserPreference.order_count.desc()).limit(3).all()
+    for item in popular_items:
+        if item.id not in ordered_item_ids and item not in recommendations:
+            recommendations.append(item)
+            
+    # If still few recs, just return top 3 items
+    if len(recommendations) < 3:
+        top_items = db.query(models.MenuItem).filter(models.MenuItem.is_available == True).limit(3).all()
+        for item in top_items:
+            if item.id not in ordered_item_ids and item not in recommendations:
+                recommendations.append(item)
+                
+    return recommendations[:5]
+
+@app.get("/ai/stats/prep-time-prediction")
+def predict_prep_time(db: Session = Depends(get_db)):
+    # Logic: If many orders are in 'COOKING' or 'RECEIVED' status, increase estimated prep time
+    active_orders_count = db.query(models.Order).filter(models.Order.status.in_(["received", "cooking"])).count()
+    load_factor = 1.0 + (active_orders_count * 0.1) # 10% increase per active order
+    
+    return {
+        "active_orders": active_orders_count,
+        "load_multiplier": round(load_factor, 2),
+        "message": "High load detected" if active_orders_count > 5 else "Normal load"
+    }
