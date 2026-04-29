@@ -135,7 +135,7 @@ class _CartScreenState extends State<CartScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
-                  _buildQtyBtn(Icons.add, () => cart.addItem(item)),
+                  _buildQtyBtn(Icons.add, () => cart.addItem(item.toMenuItem())),
                 ],
               ),
             ],

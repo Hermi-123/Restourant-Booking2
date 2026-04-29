@@ -18,17 +18,32 @@ class MenuItem {
       id: json['id'],
       name: json['name'],
       category: json['category'],
-      price: json['price'] is int ? (json['price'] as int).toDouble() : double.parse(json['price'].toString()),
+      price: json['price'] is int ? (json['price'] as int).toDouble() : json['price'],
       prepTime: json['prep_time'],
     );
   }
 }
 
 class CartItem {
-  final MenuItem menuItem;
+  final int id;
+  final String name;
+  final double price;
   int quantity;
 
-  CartItem({required this.menuItem, this.quantity = 1});
+  CartItem({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.quantity,
+  });
 
-  double get totalPrice => menuItem.price * quantity;
+  MenuItem toMenuItem() {
+    return MenuItem(
+      id: id,
+      name: name,
+      category: '', // Not needed for cart increment
+      price: price,
+      prepTime: 0, // Not needed for cart increment
+    );
+  }
 }

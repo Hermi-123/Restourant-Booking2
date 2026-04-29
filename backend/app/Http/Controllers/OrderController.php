@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\MenuItem;
-use App\Models\UserPreference;
 use App\Models\Session;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -34,14 +33,6 @@ class OrderController extends Controller
                 'quantity' => $item['quantity'],
                 'price' => $menuItem->price
             ];
-
-            // Update user preferences for AI recommendations
-            $pref = UserPreference::firstOrNew([
-                'session_id' => $validated['session_id'],
-                'menu_item_id' => $item['menu_item_id']
-            ]);
-            $pref->count += $item['quantity'];
-            $pref->save();
         }
 
         $order = Order::create([

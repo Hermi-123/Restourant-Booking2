@@ -12,6 +12,12 @@ class AppTheme {
   static const Color textPrimary = Color(0xFFF8F9FA);
   static const Color textSecondary = Color(0xFFADB5BD);
 
+  // Aliases for compatibility
+  static const Color accentTeal = secondaryMint;
+  static const Color surfaceColor = surface;
+  static const Color darkBg = background;
+  static const Color cardBg = surface;
+
   // Glassmorphism effect simulation colors
   static Color glassColor = Colors.white.withValues(alpha: 0.05);
   static Color glassBorder = Colors.white.withValues(alpha: 0.1);

@@ -49,19 +49,10 @@ return new class extends Migration
             $table->decimal('price', 10, 2);
             $table->timestamps();
         });
-
-        Schema::create('user_preferences', function (Blueprint $table) {
-            $table->id();
-            $table->foreignUuid('session_id')->constrained('table_sessions');
-            $table->foreignId('menu_item_id')->constrained('menu_items');
-            $table->integer('count')->default(1);
-            $table->timestamps();
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('user_preferences');
         Schema::dropIfExists('order_items');
         Schema::dropIfExists('orders');
         Schema::dropIfExists('menu_items');
