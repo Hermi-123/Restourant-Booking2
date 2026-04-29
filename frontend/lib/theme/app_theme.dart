@@ -7,6 +7,14 @@ class AppTheme {
   static const darkBg = Color(0xFF1A1A1A);
   static const cardBg = Color(0xFF2D2D2D);
 
+  // New aliases for Day 2/3 UI
+  static const background = darkBg;
+  static const surfaceColor = cardBg;
+  static const primarySalmon = primaryColor;
+  static const accentTeal = secondaryColor;
+  static const textPrimary = Colors.white;
+  static const textSecondary = Colors.white60;
+
   static ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     primaryColor: primaryColor,
