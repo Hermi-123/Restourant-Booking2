@@ -6,11 +6,11 @@
       0 => 'Laravel\\Pail\\PailServiceProvider',
     ),
   ),
-  'laravel/sanctum' => 
+  'laravel/pao' => 
   array (
     'providers' => 
     array (
-      0 => 'Laravel\\Sanctum\\SanctumServiceProvider',
+      0 => 'Laravel\\Pao\\Laravel\\ServiceProvider',
     ),
   ),
   'laravel/tinker' => 
