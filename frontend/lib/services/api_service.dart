@@ -93,8 +93,6 @@ class ApiService {
     return [];
   }
 
-  // New Day 3 Endpoints
-
   static Future<List<dynamic>> getStaffOrders() async {
     try {
       final response = await http.get(
@@ -148,5 +146,26 @@ class ApiService {
       print('Error getting recommendations: $e');
     }
     return [];
+  }
+
+  static Future<Map<String, dynamic>> getAdminStats() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/stats'),
+        headers: {'Accept': 'application/json'}
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      print('Error fetching admin stats: $e');
+    }
+    return {
+      'total_revenue': 0.0,
+      'active_sessions': 0,
+      'completed_orders': 0,
+      'popular_items': []
+    };
   }
 }
