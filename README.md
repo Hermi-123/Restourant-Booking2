@@ -1,61 +1,43 @@
-# Smart Restaurant Ordering System - Backend (Round 2)
+# Fine Dine - Ultra-Premium Restaurant Ordering System 🍽️✨
 
-This is the backend API for the Smart Restaurant Ordering System, built with **FastAPI** and **SQLAlchemy**.
+Welcome to **Fine Dine**, a world-class, non-AI, restaurant ordering solution built with **Flutter** and **Laravel**. Experience a seamless, high-end dining journey from QR scanning to order tracking with a stunning glassmorphism UI.
 
-## Features
-- **QR-Based Table Sessions**: Persistent sessions linked to specific table QR codes.
-- **Dynamic Menu**: Categorized menu with estimated preparation times and availability tracking.
-- **Real-Time Ordering**: Session-based ordering with unique order tracking numbers.
-- **Staff Dashboard**: API endpoints for staff to view and update order statuses (Received, Cooking, Ready, Delivered).
-- **AI-Driven Personalization**:
-    - **Smart Recommendations**: Suggests items based on current session behavior and global popularity.
-    - **Intelligent Upselling**: Pairing suggestions (e.g., suggesting a drink if a main course is ordered).
-    - **Prep Time Prediction**: Dynamically adjusts estimated wait times based on current kitchen load.
+![Fine Dine Application Showcase](file:///C:/Users/Dell/.gemini/antigravity/brain/7d2d99ac-1bcd-4aee-9c79-a4db4b3752bc/media__1777035583390.png)
 
-## Tech Stack
-- **Framework**: FastAPI
-- **Database**: SQLite (SQLAlchemy ORM)
-- **Validation**: Pydantic
-- **AI Logic**: Hybrid recommendation engine (Preferences + Popularity + Heuristic Pairing)
+## 💎 Premium Features
 
-## System Architecture
+- **Elegant UI/UX**: A state-of-the-art dark theme featuring glassmorphism, smooth staggered animations, and refined typography.
+- **QR-Based Sessions**: Instant table identification via QR scan to start a dining session.
+- **Dynamic Menu**: A beautifully categorized digital menu with real-time availability.
+- **Interactive Cart**: Manage your "Feast Selection" with an intuitive glass-styled cart.
+- **Live Order Tracking**: A real-time stepper dashboard to track your order from "Received" to "Delivered".
+- **Manager Dashboard**: Comprehensive analytics for restaurant owners, including revenue tracking and popular dish statistics.
+- **Kitchen Portal**: A dedicated interface for staff to manage active orders in real-time.
 
-```mermaid
-graph TD
-    User((User)) -->|Scan QR| Session[Table Session Management]
-    Session -->|Browse| Menu[Menu System]
-    Menu -->|Add to Cart| Order[Ordering System]
-    Order -->|Trigger| AI[AI Recommendation Engine]
-    Order -->|Save| DB[(SQLite Database)]
-    DB -->|Read| Staff[Staff Dashboard]
-    Staff -->|Update Status| DB
-    Order -->|Track| Track[Real-time Tracking]
-```
+## 🛠️ Technology Stack
 
-## QR Session Logic
-1. Each table has a unique `qr_code_id`.
-2. When scanned, the system checks for an active session. If none exists, a new `session_token` (UUID) is generated and persisted.
-3. This token is used for all subsequent interactions (ordering, tracking) to ensure data consistency even if the page is refreshed.
+- **Frontend**: Flutter (Mobile/Web/Desktop)
+- **Backend**: Laravel 11 (RESTful API)
+- **Database**: SQLite (Optimized for local & mobile deployment)
+- **Design System**: Custom Premium UI (Outfit Typography + Glassmorphism)
 
-## AI Feature Explanation
-The system uses a custom heuristic engine:
-- **Session-Based Personalization**: Tracks what items the user has ordered in the current session.
-- **Upselling Logic**: Specifically looks for missing categories in an order (e.g., ordering food but no beverage) and suggests items from those categories.
-- **Demand Awareness**: The `prep-time-prediction` endpoint calculates a "Load Multiplier" based on the number of active orders in the kitchen, providing realistic wait times.
+## 🚀 Getting Started
 
-## Getting Started
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Run the server:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-3. Seed sample data:
-   ```bash
-   POST http://localhost:8000/seed
-   ```
+### Backend Setup
+1. Navigate to the `backend` folder.
+2. Install dependencies: `composer install`
+3. Set up your `.env` file.
+4. Run migrations & seed data: `php artisan migrate:fresh --seed`
+5. Start the server: `php artisan serve`
 
-## API Documentation
-Once running, visit `http://localhost:8000/docs` for the interactive Swagger documentation.
+### Frontend Setup
+1. Navigate to the `frontend` folder.
+2. Install dependencies: `flutter pub get`
+3. Update `lib/services/api_service.dart` with your server IP.
+4. Run the app: `flutter run`
+
+## 📱 Mobile Deployment
+For mobile testing, ensure your phone and computer are on the same Wi-Fi. Start the backend with `php artisan serve --host=0.0.0.0` and point the Flutter app to your computer's local IP address.
+
+---
+*Built with passion for the ultimate dining experience.*
