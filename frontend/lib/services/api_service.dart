@@ -92,4 +92,61 @@ class ApiService {
     }
     return [];
   }
+
+  // New Day 3 Endpoints
+
+  static Future<List<dynamic>> getStaffOrders() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/staff/orders'),
+        headers: {'Accept': 'application/json'}
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      print('Error fetching staff orders: $e');
+    }
+    return [];
+  }
+
+  static Future<bool> updateOrderStatus(String orderId, String status) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/order/$orderId/status'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({'status': status})
+      );
+      
+      if (response.statusCode == 200) {
+        return true;
+      }
+    } catch (e) {
+      print('Error updating status: $e');
+    }
+    return false;
+  }
+
+  static Future<List<dynamic>> getRecommendations() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final sessionToken = prefs.getString('session_token');
+      
+      if (sessionToken == null) return [];
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/recommend/$sessionToken'),
+        headers: {'Accept': 'application/json'}
+      );
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['recommendations'] ?? [];
+      }
+    } catch (e) {
+      print('Error getting recommendations: $e');
+    }
+    return [];
+  }
 }

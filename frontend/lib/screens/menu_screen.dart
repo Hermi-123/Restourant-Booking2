@@ -16,8 +16,10 @@ class MenuScreen extends StatefulWidget {
 
 class _MenuScreenState extends State<MenuScreen> {
   List<dynamic> _menuItems = [];
+  List<dynamic> _recommendations = [];
   String _selectedCategory = 'All';
   bool _isLoading = true;
+  bool _isLoadingRecs = true;
 
   final List<String> _categories = [
     'All',
@@ -31,6 +33,7 @@ class _MenuScreenState extends State<MenuScreen> {
   void initState() {
     super.initState();
     _loadMenu();
+    _loadRecommendations();
   }
 
   Future<void> _loadMenu() async {
@@ -41,6 +44,16 @@ class _MenuScreenState extends State<MenuScreen> {
       setState(() {
         _menuItems = items;
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadRecommendations() async {
+    final recs = await ApiService.getRecommendations();
+    if (mounted) {
+      setState(() {
+        _recommendations = recs;
+        _isLoadingRecs = false;
       });
     }
   }
@@ -86,63 +99,108 @@ class _MenuScreenState extends State<MenuScreen> {
           );
         },
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Text(
-              'What are you craving?',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 18,
-              ),
-            ),
-          ),
-          
-          // Category Filter
-          SizedBox(
-            height: 50,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final isSelected = _selectedCategory == _categories[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: ChoiceChip(
-                    label: Text(
-                      _categories[index],
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Chef's Recommendations Section
+            if (!_isLoadingRecs && _recommendations.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: AppTheme.primarySalmon, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Chef's Recommendations",
                       style: TextStyle(
-                        color: isSelected ? Colors.white : AppTheme.textSecondary,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: AppTheme.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    selected: isSelected,
-                    selectedColor: AppTheme.primarySalmon,
-                    backgroundColor: AppTheme.surfaceColor,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedCategory = _categories[index];
-                      });
-                      _loadMenu();
-                    },
-                  ),
-                );
-              },
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 220,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  itemCount: _recommendations.length,
+                  itemBuilder: (context, index) {
+                    final item = _recommendations[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: SizedBox(
+                        width: 160,
+                        child: _buildItemCard(item, isCompact: true),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Text(
+                'What are you craving?',
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 18,
+                ),
+              ),
             ),
-          ),
-          
-          const SizedBox(height: 10),
-          
-          // Menu Grid
-          Expanded(
-            child: _isLoading 
-              ? Center(child: CircularProgressIndicator(color: AppTheme.accentTeal))
+            
+            // Category Filter
+            SizedBox(
+              height: 50,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                itemCount: _categories.length,
+                itemBuilder: (context, index) {
+                  final isSelected = _selectedCategory == _categories[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: ChoiceChip(
+                      label: Text(
+                        _categories[index],
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : AppTheme.textSecondary,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      selected: isSelected,
+                      selectedColor: AppTheme.primarySalmon,
+                      backgroundColor: AppTheme.surfaceColor,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedCategory = _categories[index];
+                        });
+                        _loadMenu();
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+            
+            const SizedBox(height: 10),
+            
+            // Menu Grid
+            _isLoading 
+              ? SizedBox(
+                  height: 300,
+                  child: Center(child: CircularProgressIndicator(color: AppTheme.accentTeal)),
+                )
               : AnimationLimiter(
                   child: GridView.builder(
                     padding: const EdgeInsets.all(20),
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       childAspectRatio: 0.75,
@@ -165,17 +223,19 @@ class _MenuScreenState extends State<MenuScreen> {
                     },
                   ),
                 ),
-          ),
-        ],
+            const SizedBox(height: 80), // Space for FAB
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildItemCard(dynamic item) {
+  Widget _buildItemCard(dynamic item, {bool isCompact = false}) {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(20),
+        border: isCompact ? Border.all(color: AppTheme.primarySalmon.withValues(alpha: 0.3), width: 1) : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -201,7 +261,7 @@ class _MenuScreenState extends State<MenuScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(isCompact ? 8 : 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -211,11 +271,11 @@ class _MenuScreenState extends State<MenuScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: AppTheme.textPrimary,
-                    fontSize: 16,
+                    fontSize: isCompact ? 14 : 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 5),
+                SizedBox(height: isCompact ? 2 : 5),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -223,35 +283,37 @@ class _MenuScreenState extends State<MenuScreen> {
                       '\$${item['price']}',
                       style: TextStyle(
                         color: AppTheme.accentTeal,
-                        fontSize: 16,
+                        fontSize: isCompact ? 14 : 16,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     Row(
                       children: [
-                        Icon(Icons.timer_outlined, size: 14, color: AppTheme.textSecondary),
-                        const SizedBox(width: 4),
+                        Icon(Icons.timer_outlined, size: 12, color: AppTheme.textSecondary),
+                        const SizedBox(width: 2),
                         Text(
                           '~${item['prep_time'] ?? 10}m',
                           style: TextStyle(
                             color: AppTheme.textSecondary,
-                            fontSize: 12,
+                            fontSize: 10,
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: isCompact ? 5 : 10),
                 SizedBox(
                   width: double.infinity,
+                  height: isCompact ? 30 : null,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primarySalmon.withValues(alpha: 0.1),
                       foregroundColor: AppTheme.primarySalmon,
                       elevation: 0,
+                      padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(isCompact ? 8 : 10),
                       ),
                     ),
                     onPressed: () {
@@ -265,7 +327,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         ),
                       );
                     },
-                    child: const Text('Add to Feast', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text('Add to Feast', style: TextStyle(fontWeight: FontWeight.bold, fontSize: isCompact ? 12 : 14)),
                   ),
                 ),
               ],
