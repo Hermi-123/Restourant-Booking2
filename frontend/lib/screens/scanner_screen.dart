@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:animate_do/animate_do.dart';
-import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../services/api_service.dart';
 import 'menu_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
@@ -12,89 +11,121 @@ class ScannerScreen extends StatefulWidget {
 }
 
 class _ScannerScreenState extends State<ScannerScreen> {
-  bool isLoading = false;
+  bool _isProcessing = false;
 
-  void _onScan(String code) async {
-    setState(() => isLoading = true);
-    final session = await ApiService.startSession(code);
-    setState(() => isLoading = false);
-
-    if (session != null && mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MenuScreen()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid QR Code. Please try again.')),
-      );
+  Future<void> _mockScan() async {
+    setState(() => _isProcessing = true);
+    
+    // Simulate QR processing
+    final session = await ApiService.startSession('TABLE_1');
+    
+    if (mounted) {
+      if (session != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MenuScreen()),
+        );
+      } else {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to identify table. Please try again.')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.background,
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppTheme.darkBg, Color(0xFF000000)],
+          // Elegant Background Pattern
+          Positioned(
+            top: -100,
+            left: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                color: AppTheme.primarySalmon.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
             ),
           ),
-          Center(
+          
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                FadeInDown(
-                  child: const Icon(Icons.restaurant_menu, size: 80, color: AppTheme.primaryColor),
-                ),
-                const SizedBox(height: 24),
-                FadeInUp(
-                  child: Text(
-                    'Smart Dine',
-                    style: Theme.of(context).textTheme.headlineLarge,
+                const Spacer(flex: 3),
+                // Premium Logo/Icon
+                Container(
+                  padding: const EdgeInsets.all(30),
+                  decoration: AppTheme.glassDecoration(opacity: 0.05),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.restaurant_menu_rounded, size: 80, color: AppTheme.primarySalmon),
+                      const SizedBox(height: 20),
+                      Text(
+                        'FINE DINE',
+                        style: AppTheme.darkTheme.textTheme.headlineLarge?.copyWith(
+                          letterSpacing: 8,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                FadeInUp(
-                  delay: const Duration(milliseconds: 200),
-                  child: Text(
-                    'Step in, scan your table, and start the feast.',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                const Spacer(flex: 1),
+                Text(
+                  'Your table is ready.',
+                  style: AppTheme.darkTheme.textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  'Scan the QR code on your table to browse our exclusive menu.',
+                  textAlign: TextAlign.center,
+                  style: AppTheme.darkTheme.textTheme.bodyLarge?.copyWith(
+                    color: AppTheme.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 60),
-                FadeIn(
-                  delay: const Duration(milliseconds: 500),
-                  child: Container(
-                    width: 250,
-                    height: 250,
+                const Spacer(flex: 2),
+                
+                // Animated Scan Button
+                GestureDetector(
+                  onTap: _isProcessing ? null : _mockScan,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppTheme.primaryColor, width: 2),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: Stack(
-                      children: [
-                        const Center(child: Icon(Icons.qr_code_scanner, size: 100, color: Colors.white24)),
-                        if (isLoading)
-                          const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)),
+                      color: _isProcessing ? AppTheme.surface : AppTheme.primarySalmon,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primarySalmon.withValues(alpha: 0.3),
+                          blurRadius: 30,
+                          spreadRadius: 5,
+                        )
                       ],
                     ),
+                    child: _isProcessing 
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Icon(Icons.qr_code_scanner_rounded, size: 45, color: Colors.white),
                   ),
                 ),
-                const SizedBox(height: 48),
-                FadeInUp(
-                  delay: const Duration(milliseconds: 800),
-                  child: ElevatedButton(
-                    onPressed: () => _onScan('TABLE1'), // Simulation
-                    child: const Text("CLAIM TABLE #1 & LET'S EAT!"),
+                const SizedBox(height: 20),
+                const Text(
+                  'TAP TO SCAN',
+                  style: TextStyle(
+                    color: AppTheme.primarySalmon,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
                   ),
                 ),
+                const Spacer(flex: 2),
               ],
             ),
           ),

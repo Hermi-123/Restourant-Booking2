@@ -19,7 +19,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
   void initState() {
     super.initState();
     _fetchOrders();
-    // Poll the backend every 10 seconds for real-time tracking
     _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
       _fetchOrders();
     });
@@ -41,159 +40,199 @@ class _TrackingScreenState extends State<TrackingScreen> {
     }
   }
 
-  Widget _buildStatusIndicator(String currentStatus, String targetStatus, String label, IconData icon) {
-    bool isCompleted = false;
-    bool isActive = false;
-
-    // Ordered logic for statuses
-    List<String> statuses = ['received', 'cooking', 'ready', 'delivered'];
-    int currentIndex = statuses.indexOf(currentStatus);
-    int targetIndex = statuses.indexOf(targetStatus);
-
-    if (currentIndex > targetIndex) {
-      isCompleted = true;
-    } else if (currentIndex == targetIndex) {
-      isActive = true;
-    }
-
-    Color color = isCompleted 
-        ? AppTheme.accentTeal 
-        : (isActive ? AppTheme.primarySalmon : AppTheme.textSecondary.withValues(alpha: 0.3));
-
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: isActive ? 0.2 : 0.1),
-            shape: BoxShape.circle,
-            border: Border.all(color: color, width: isActive ? 3 : 1),
-          ),
-          child: Icon(icon, color: color, size: 24),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive ? AppTheme.textPrimary : AppTheme.textSecondary,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            fontSize: 12,
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Track Your Feast',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontWeight: FontWeight.bold,
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(),
+          SliverToBoxAdapter(
+            child: _isLoading 
+              ? const Padding(
+                  padding: EdgeInsets.only(top: 100),
+                  child: Center(child: CircularProgressIndicator(color: AppTheme.secondaryMint)),
+                )
+              : _orders.isEmpty
+                  ? _buildEmptyState()
+                  : _buildOrdersList(),
           ),
-        ),
-        iconTheme: IconThemeData(color: AppTheme.textPrimary),
+        ],
       ),
-      body: _isLoading 
-        ? Center(child: CircularProgressIndicator(color: AppTheme.accentTeal))
-        : _orders.isEmpty
-          ? Center(
-              child: Text(
-                'No orders placed yet.',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 18),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: _orders.length,
-              itemBuilder: (context, index) {
-                final order = _orders[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      )
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Order #${order['order_number']}',
-                            style: TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            '\$${order['total_price']}',
-                            style: TextStyle(
-                              color: AppTheme.accentTeal,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildStatusIndicator(order['status'], 'received', 'Received', Icons.receipt),
-                          _buildStatusIndicator(order['status'], 'cooking', 'Cooking', Icons.soup_kitchen),
-                          _buildStatusIndicator(order['status'], 'ready', 'Ready', Icons.room_service),
-                          _buildStatusIndicator(order['status'], 'delivered', 'Delivered', Icons.check_circle),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      const Divider(color: Colors.white24),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Items:',
-                        style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 10),
-                      ...((order['items'] as List).map((item) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 5),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${item['quantity']}x ${item['menu_item']['name']}',
-                                style: TextStyle(color: AppTheme.textPrimary),
-                              ),
-                              Text(
-                                '\$${item['price']}',
-                                style: TextStyle(color: AppTheme.textSecondary),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList()),
-                    ],
-                  ),
-                );
-              },
-            ),
     );
+  }
+
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 180,
+      floating: false,
+      pinned: true,
+      backgroundColor: AppTheme.background,
+      elevation: 0,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+        title: const Text(
+          'Track Your Feast',
+          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 22),
+        ),
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [AppTheme.primarySalmon.withValues(alpha: 0.3), AppTheme.background],
+                ),
+              ),
+            ),
+            const Positioned(
+              right: -30,
+              top: -20,
+              child: Icon(Icons.restaurant, size: 150, color: Colors.white10),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Column(
+      children: [
+        const SizedBox(height: 100),
+        Icon(Icons.history, size: 80, color: AppTheme.glassBorder),
+        const SizedBox(height: 20),
+        const Text('No active orders found.', style: TextStyle(color: Colors.white70, fontSize: 18)),
+      ],
+    );
+  }
+
+  Widget _buildOrdersList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+      itemCount: _orders.length,
+      itemBuilder: (context, index) {
+        final order = _orders[index];
+        return _buildOrderCard(order);
+      },
+    );
+  }
+
+  Widget _buildOrderCard(dynamic order) {
+    final status = order['status'];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 30),
+      padding: const EdgeInsets.all(25),
+      decoration: AppTheme.glassDecoration(opacity: 0.1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Order ${order['order_number']}',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _getStatusColor(status).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  status.toUpperCase(),
+                  style: TextStyle(color: _getStatusColor(status), fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 30),
+          _buildStatusStepper(status),
+          const SizedBox(height: 30),
+          const Divider(color: Colors.white10),
+          const SizedBox(height: 15),
+          ...((order['items'] as List).map((item) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: [
+                  Text('${item['quantity']}x', style: const TextStyle(color: AppTheme.secondaryMint, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 15),
+                  Expanded(child: Text(item['menu_item']['name'], style: const TextStyle(color: AppTheme.textSecondary))),
+                ],
+              ),
+            );
+          }).toList()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusStepper(String currentStatus) {
+    final steps = ['received', 'cooking', 'ready', 'delivered'];
+    final currentIndex = steps.indexOf(currentStatus);
+
+    return Row(
+      children: List.generate(steps.length, (index) {
+        final isActive = index <= currentIndex;
+        final isLast = index == steps.length - 1;
+
+        return Expanded(
+          child: Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: isActive ? AppTheme.primarySalmon : AppTheme.glassColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: isActive ? AppTheme.primarySalmon : AppTheme.glassBorder, width: 2),
+                  boxShadow: isActive ? [BoxShadow(color: AppTheme.primarySalmon.withValues(alpha: 0.4), blurRadius: 10)] : null,
+                ),
+                child: Center(
+                  child: Icon(
+                    _getStatusIcon(steps[index]),
+                    size: 16,
+                    color: isActive ? Colors.white : AppTheme.textSecondary,
+                  ),
+                ),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    color: isActive && (index < currentIndex) ? AppTheme.primarySalmon : AppTheme.glassBorder,
+                  ),
+                ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'received': return Colors.blueAccent;
+      case 'cooking': return Colors.orangeAccent;
+      case 'ready': return AppTheme.secondaryMint;
+      case 'delivered': return Colors.greenAccent;
+      default: return Colors.white;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'received': return Icons.receipt_long;
+      case 'cooking': return Icons.soup_kitchen;
+      case 'ready': return Icons.notifications_active;
+      case 'delivered': return Icons.check;
+      default: return Icons.timer;
+    }
   }
 }
