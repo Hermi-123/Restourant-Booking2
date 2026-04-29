@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\MenuItem;
 use App\Models\UserPreference;
+use App\Models\Session;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -82,5 +83,26 @@ class OrderController extends Controller
     public function staffOrders()
     {
         return response()->json(Order::with(['session.table', 'items.menuItem'])->orderBy('created_at', 'desc')->get());
+    }
+
+    public function stats()
+    {
+        $totalRevenue = Order::where('status', 'delivered')->sum('total_price');
+        $activeSessions = Session::where('active', true)->count();
+        $completedOrders = Order::where('status', 'delivered')->count();
+        
+        $popularItems = OrderItem::select('menu_item_id', \DB::raw('count(*) as count'))
+            ->groupBy('menu_item_id')
+            ->orderBy('count', 'desc')
+            ->with('menuItem')
+            ->take(5)
+            ->get();
+
+        return response()->json([
+            'total_revenue' => $totalRevenue,
+            'active_sessions' => $activeSessions,
+            'completed_orders' => $completedOrders,
+            'popular_items' => $popularItems
+        ]);
     }
 }

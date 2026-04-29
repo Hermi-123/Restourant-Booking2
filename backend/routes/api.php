@@ -17,5 +17,6 @@ Route::get('/order/{session_id}', [OrderController::class, 'show']);
 Route::put('/order/{order_id}/status', [OrderController::class, 'updateStatus']);
 
 Route::get('/staff/orders', [OrderController::class, 'staffOrders']);
+Route::get('/admin/stats', [OrderController::class, 'stats']);
 
 Route::get('/recommend/{session_id}', [AIController::class, 'recommend']);
