@@ -2,7 +2,7 @@
 
 Welcome to **Fine Dine**, a world-class, non-AI, restaurant ordering solution built with **Flutter** and **Laravel**. Experience a seamless, high-end dining journey from QR scanning to order tracking with a stunning glassmorphism UI.
 
-![Fine Dine Application Showcase](file:///C:/Users/Dell/.gemini/antigravity/brain/7d2d99ac-1bcd-4aee-9c79-a4db4b3752bc/media__1777035583390.png)
+![Fine Dine Application Showcase](docs/showcase.png)
 
 ## 💎 Premium Features
 
