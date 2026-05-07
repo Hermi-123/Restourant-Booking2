@@ -37,6 +37,12 @@ Welcome to **Fine Dine**, a world-class, non-AI, restaurant ordering solution bu
 4. Run the app: `flutter run`
 
 ## 📱 Mobile Deployment
+
+### **Download APK**
+You can find the latest production build at:
+`frontend/build/app/outputs/flutter-apk/app-release.apk`
+
+### **Running on Device**
 For mobile testing, ensure your phone and computer are on the same Wi-Fi. Start the backend with `php artisan serve --host=0.0.0.0` and point the Flutter app to your computer's local IP address.
 
 ---
